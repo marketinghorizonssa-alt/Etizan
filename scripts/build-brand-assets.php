@@ -23,8 +23,10 @@ function fit_webp(string $src, string $dest, int $maxW, int $quality, bool $alph
 try {
     fit_webp($logo, $out.'/logo-brand.webp', 384, 90, true);
     fit_webp($hero, $out.'/hero-bg.webp', 1024, 72, false);
+    fit_webp($hero, $out.'/hero-bg-mobile.webp', 640, 68, false);
     fit_webp($about, $out.'/about-image.webp', 960, 74, false);
-    foreach (['logo-brand.webp','hero-bg.webp','about-image.webp'] as $f) {
+    fit_webp($about, $out.'/about-image-mobile.webp', 640, 72, false);
+    foreach (['logo-brand.webp','hero-bg.webp','hero-bg-mobile.webp','about-image.webp','about-image-mobile.webp'] as $f) {
         $p=$out.'/'.$f; if (!is_file($p) || filesize($p) < 1000) throw new RuntimeException("missing output: $f");
         echo $f.':'.filesize($p)."\n";
     }
