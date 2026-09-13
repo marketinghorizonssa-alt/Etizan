@@ -19,6 +19,7 @@ if ($path === '/sitemap.xml') {
     header('Content-Type: application/xml; charset=utf-8'); echo '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'; foreach($urls as $url) echo '<url><loc>'.htmlspecialchars($url,ENT_XML1).'</loc></url>'; echo '</urlset>'; exit;
 }
 if ($path === '/') { header('Location: /riyadh/', true, 302); exit; }
+if (preg_match('#^/(riyadh|jeddah)/ip-insurance/?$#', $path, $m)) { header('Location: /'.$m[1].'/ip-franchise/', true, 301); exit; }
 if (preg_match('#^/(riyadh|jeddah)(?:/([^/]+))?/?$#', $path, $m)) {
     $key = $m[2] ?? 'general'; if ($key !== 'general' && !isset(etizan_pages()[$key])) { http_response_code(404); echo 'Not Found'; exit; }
     etizan_render($path);
