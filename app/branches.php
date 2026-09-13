@@ -16,7 +16,7 @@ function etizan_branch(string $cityEn): array {
         'name' => 'مكتب الرياض',
         'phone' => '966552491110',
         'phone_display' => '055 249 1110',
-        'address' => 'الرياض، المملكة العربية السعودية',
-        'map' => 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode('شركة إتزان للمحاماة والاستشارات القانونية الرياض'),
+        'address' => 'طريق الملك فهد، برج الفيصلية، الرياض 12271',
+        'map' => 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode('شركة إتزان للمحاماة والاستشارات القانونية برج الفيصلية الرياض'),
     ];
 }
