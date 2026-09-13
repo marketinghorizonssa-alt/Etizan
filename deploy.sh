@@ -1,0 +1,22 @@
+#!/bin/sh
+set -eu
+SHA="${1:?commit sha required}"
+ROOT="/home/u878466595/domains/hositee.com/public_html/etizan-law"
+TMP="/home/u878466595/.etizan-deploy-${SHA}"
+ZIP="/home/u878466595/.etizan-${SHA}.zip"
+URL="https://codeload.github.com/marketinghorizonssa-alt/Etizan/zip/${SHA}"
+rm -rf "$TMP" "$ZIP"
+mkdir -p "$TMP" "$ROOT"
+curl -fsSL "$URL" -o "$ZIP"
+unzip -q "$ZIP" -d "$TMP"
+SRC=$(find "$TMP" -mindepth 1 -maxdepth 1 -type d | head -n 1)
+test -f "$SRC/index.php"
+test -f "$SRC/app/config.php"
+test -f "$SRC/public/assets/site.css"
+mkdir -p "$ROOT/app" "$ROOT/assets"
+cp -f "$SRC/index.php" "$SRC/.htaccess" "$ROOT/"
+cp -f "$SRC/app/"*.php "$ROOT/app/"
+cp -f "$SRC/public/assets/"* "$ROOT/assets/"
+printf '%s\n' "$SHA" > "$ROOT/RELEASE"
+rm -rf "$TMP" "$ZIP"
+printf 'ETIZAN_DEPLOY_OK:%s\n' "$SHA"
