@@ -13,6 +13,25 @@ if ($path === '/submit') {
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') etizan_json(405,['ok'=>false,'error'=>'method_not_allowed']);
     etizan_handle_submit();
 }
+if ($path === '/llms.txt') {
+    header('Content-Type: text/plain; charset=utf-8');
+    header('Cache-Control: public, max-age=86400');
+    echo "# شركة إتزان للمحاماة والاستشارات القانونية\n\n";
+    echo "> شركة سعودية تقدم خدمات قانونية للشركات والمستثمرين والأفراد عبر صفحات متخصصة لفرعي الرياض وجدة.\n\n";
+    echo "## الفروع\n";
+    echo "- [مكتب الرياض](".ETIZAN_BASE."/riyadh/)\n";
+    echo "- [مكتب جدة](".ETIZAN_BASE."/jeddah/)\n\n";
+    echo "## صفحات الخدمات\n";
+    foreach (['riyadh'=>'الرياض','jeddah'=>'جدة'] as $cityEn=>$cityAr) {
+        foreach (etizan_pages() as $key=>$page) {
+            $url=ETIZAN_BASE.'/'.$cityEn.'/'.($key==='general'?'':$key.'/');
+            $label=str_replace('%CITY%',$cityAr,(string)$page['h1']);
+            echo '- ['.$label.']('.$url.")\n";
+        }
+    }
+    echo "\n## التواصل\n- [سياسة الخصوصية](".ETIZAN_PRIVACY.")\n";
+    exit;
+}
 if ($path === '/robots.txt') { header('Content-Type: text/plain; charset=utf-8'); echo "User-agent: *\nAllow: /\nSitemap: https://etizan.hositee.com/sitemap.xml\n"; exit; }
 if ($path === '/sitemap.xml') {
     $urls=[]; foreach(['riyadh','jeddah'] as $city) foreach(array_keys(etizan_pages()) as $key) $urls[]=ETIZAN_BASE.'/'.$city.'/'.($key==='general'?'':$key.'/');
