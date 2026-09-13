@@ -2,6 +2,47 @@
   const dl=(event,extra={})=>{window.dataLayer=window.dataLayer||[];window.dataLayer.push({event,...extra})};
   const qs=new URLSearchParams(location.search);
   const attr={}; ['gclid','gbraid','wbraid','utm_source','utm_medium','utm_campaign','utm_term','utm_content','campaign_id','adgroup_id','creative_id'].forEach(k=>{if(qs.get(k))attr[k]=qs.get(k)});
+
+  const landingPages=[
+    ['', 'الرئيسية'],
+    ['corporate','الشركات والاستثمار'],
+    ['contracts','التجاري والعقود'],
+    ['litigation','القضايا والتقاضي'],
+    ['criminal','القضايا الجنائية'],
+    ['administrative','القضايا الإدارية'],
+    ['real-estate','العقارات'],
+    ['labor','القضايا العمالية'],
+    ['family-inheritance','الأحوال والتركات'],
+    ['enforcement-arbitration','التنفيذ والتحكيم'],
+    ['insurance','التأمين'],
+    ['finance-regulatory','المصرفي والضريبي'],
+    ['bankruptcy','الإفلاس'],
+    ['ip-franchise','الملكية الفكرية والامتياز'],
+    ['cybercrime','الجرائم المعلوماتية'],
+    ['aviation-transport','الطيران والنقل']
+  ];
+
+  const nav=document.querySelector('.nav-links');
+  if(nav){
+    const currentCity=location.pathname.startsWith('/jeddah')?'jeddah':'riyadh';
+    const branchColumn=(slug,label)=>`<section class="branch-menu"><h4><a href="/${slug}/">${label}</a></h4>${landingPages.map(([path,name],i)=>`<a${i===0?' class="branch-home"':''} href="/${slug}/${path?path+'/':''}">${name}</a>`).join('')}</section>`;
+    nav.classList.add('campaign-nav');
+    nav.innerHTML=`<a class="current-home" href="/${currentCity}/">الرئيسية</a><details class="landing-menu"><summary>الأقسام <span aria-hidden="true">⌄</span></summary><div class="landing-mega"><div class="landing-mega-grid">${branchColumn('riyadh','الرياض')}${branchColumn('jeddah','جدة')}</div></div></details><a href="#about">من نحن</a><a href="#why">لماذا إتزان</a><a href="#process">آلية العمل</a>`;
+    const menu=nav.querySelector('.landing-menu');
+    document.addEventListener('click',e=>{if(menu?.open&&!menu.contains(e.target))menu.removeAttribute('open')});
+    menu?.addEventListener('keydown',e=>{if(e.key==='Escape')menu.removeAttribute('open')});
+  }
+
+  const office=document.querySelector('.office-location');
+  if(office){
+    let query=office.textContent.trim();
+    try{query=new URL(office.href).searchParams.get('query')||query}catch(_){ }
+    const map=document.createElement('div');
+    map.className='office-map';
+    map.innerHTML=`<iframe title="موقع ${document.body.dataset.city||'المكتب'} على خرائط Google" src="https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>`;
+    office.insertAdjacentElement('afterend',map);
+  }
+
   document.querySelectorAll('.track-wa').forEach(a=>a.addEventListener('click',()=>dl('whatsapp_click',{contact_city:document.body.dataset.city,contact_service:document.body.dataset.service,page_path:location.pathname,...attr}),{passive:true}));
   document.querySelectorAll('.track-call').forEach(a=>a.addEventListener('click',()=>dl('phone_click',{contact_city:document.body.dataset.city,contact_service:document.body.dataset.service,page_path:location.pathname,...attr}),{passive:true}));
   const f=document.getElementById('leadForm'),status=document.getElementById('formStatus'),select=document.getElementById('serviceSelect');
