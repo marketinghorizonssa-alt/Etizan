@@ -1,0 +1,1 @@
+Search landing architecture groups closely related Etizan ad groups by visitor intent rather than creating one thin page per ad group. Riyadh and Jeddah use the same route architecture, while city copy and WhatsApp routing are rendered per city. The CSV in this directory is the source-of-truth mapping for campaign Final URLs.
