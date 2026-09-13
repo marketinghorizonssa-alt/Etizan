@@ -2,6 +2,7 @@
 const express=require('express');
 const path=require('path');
 const crypto=require('crypto');
+require('./lib/env')();
 const {ROUTER,TOKEN,RELEASE,services,pages}=require('./lib/config');
 const {html}=require('./lib/render');
 const app=express();
