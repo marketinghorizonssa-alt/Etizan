@@ -6,7 +6,7 @@ const ETIZAN_ROUTER='https://script.google.com/macros/s/AKfycbwfzI276XAcWuiPTvnH
 const ETIZAN_PRIVACY='https://www.etizan-law.com/privacy';
 const ETIZAN_BASE='https://etizan.hositee.com';
 function etizan_env():array{static $e=null;if(is_array($e))return $e;$e=[];foreach([dirname(__DIR__).'/.env','/home/u878466595/.etizan-env'] as $p){if(!is_readable($p))continue;foreach(file($p,FILE_IGNORE_NEW_LINES|FILE_SKIP_EMPTY_LINES)?:[] as $l){$l=trim($l);if($l===''||str_starts_with($l,'#')||!str_contains($l,'='))continue;[$k,$v]=array_map('trim',explode('=',$l,2));if($k!=='')$e[$k]=trim($v,"\"'");}break;}return $e;}
-function etizan_secret():string{return(string)(etizan_env()['ETIZAN_INGEST_TOKEN']??'');}
+function etizan_secret():string{$v=(string)(etizan_env()['ETIZAN_INGEST_TOKEN']??'');if(preg_match('/^[a-f0-9]{48}n$/i',$v))$v=substr($v,0,-1);return $v;}
 function etizan_release():string{$p=dirname(__DIR__).'/RELEASE';return is_readable($p)?trim((string)file_get_contents($p)):'dev';}
 function etizan_services():array{return['الشركات والاستثمار','العقود والمعاملات التجارية','التقاضي وتسوية المنازعات','القضايا الجنائية','القضايا الإدارية','اللجان شبه القضائية','العقارات والتطوير العقاري','الملكية الفكرية','التأمين','الإفلاس وإعادة التنظيم المالي','خدمات قانونية أخرى'];}
 function etizan_pages():array{return[
