@@ -5,5 +5,5 @@ if (PHP_SAPI !== 'cli') {
     exit;
 }
 require_once __DIR__ . '/leads.php';
-$result = etizan_flush_outbox(25);
+$result = etizan_flush_outbox(10);
 echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
