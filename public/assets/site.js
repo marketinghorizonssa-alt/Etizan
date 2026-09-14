@@ -21,7 +21,7 @@
   const f=document.getElementById('leadForm'),status=document.getElementById('formStatus'),select=document.getElementById('serviceSelect');
   if(!f)return;
   const phone=f.elements.phone;
-  if(phone){phone.dir='ltr';phone.style.textAlign='left';phone.maxLength=25;phone.placeholder='05xxxxxxxx / +966... / +20...';}
+  if(phone){phone.dir='ltr';phone.style.direction='ltr';phone.style.unicodeBidi='plaintext';phone.style.textAlign='left';phone.maxLength=25;phone.placeholder='05xxxxxxxx / +966... / +20...';}
   select.addEventListener('change',()=>{f.elements.service.value=select.value});
 
   const followupMessage=(p,leadId)=>{
