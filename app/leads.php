@@ -56,12 +56,26 @@ function etizan_post_json(string $url, array $payload, int $timeoutMs = 3500): a
     ];
 }
 
+function etizan_private_home(): string {
+    return rtrim((string)(getenv('HOME') ?: '/home/u878466595'), '/');
+}
+
+function etizan_secure_outbox_files(string $path): void {
+    foreach ([$path, $path . '-wal', $path . '-shm'] as $file) {
+        if (is_file($file)) @chmod($file, 0600);
+    }
+}
+
 function etizan_outbox_db(): PDO {
     static $db = null;
     if ($db instanceof PDO) return $db;
-    $home = rtrim((string)(getenv('HOME') ?: '/home/u878466595'), '/');
-    $path = $home . '/.etizan-leads.sqlite';
-    $db = new PDO('sqlite:' . $path, null, null, [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+    $path = etizan_private_home() . '/.etizan-leads.sqlite';
+    $previousUmask = umask(0077);
+    try {
+        $db = new PDO('sqlite:' . $path, null, null, [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+    } finally {
+        umask($previousUmask);
+    }
     $db->exec('PRAGMA journal_mode=WAL');
     $db->exec('PRAGMA busy_timeout=3000');
     $db->exec('CREATE TABLE IF NOT EXISTS lead_outbox (
@@ -72,7 +86,7 @@ function etizan_outbox_db(): PDO {
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL
     )');
-    @chmod($path, 0600);
+    etizan_secure_outbox_files($path);
     return $db;
 }
 
@@ -83,6 +97,7 @@ function etizan_queue_payload(string $submissionId, array $payload): void {
         VALUES (:id,:payload,0,"",:created,:updated)
         ON CONFLICT(submission_id) DO UPDATE SET payload=excluded.payload, updated_at=excluded.updated_at');
     $q->execute([':id'=>$submissionId,':payload'=>$json,':created'=>$now,':updated'=>$now]);
+    etizan_secure_outbox_files(etizan_private_home() . '/.etizan-leads.sqlite');
 }
 
 function etizan_remove_queued(string $submissionId): void {
@@ -95,25 +110,41 @@ function etizan_mark_queue_failure(string $submissionId, string $error): void {
     $q->execute([':error'=>mb_substr($error,0,500),':updated'=>time(),':id'=>$submissionId]);
 }
 
-function etizan_flush_outbox(int $limit = 20): array {
+function etizan_flush_outbox(int $limit = 10): array {
     $token = etizan_secret();
     if ($token === '') return ['ok'=>false,'error'=>'router_not_configured','sent'=>0,'failed'=>0];
-    $db = etizan_outbox_db();
-    $rows = $db->query('SELECT submission_id,payload FROM lead_outbox ORDER BY created_at ASC LIMIT ' . max(1,min(100,$limit)))->fetchAll(PDO::FETCH_ASSOC);
-    $sent = 0; $failed = 0;
-    foreach ($rows as $row) {
-        $payload = json_decode((string)$row['payload'], true);
-        if (!is_array($payload)) { etizan_remove_queued((string)$row['submission_id']); continue; }
-        $result = etizan_post_json(ETIZAN_ROUTER . '?token=' . rawurlencode($token), $payload, 30000);
-        if (!empty($result['ok'])) {
-            etizan_remove_queued((string)$row['submission_id']);
-            $sent++;
-        } else {
-            etizan_mark_queue_failure((string)$row['submission_id'], (string)($result['error'] ?? ('HTTP ' . ($result['http'] ?? 0))));
-            $failed++;
-        }
+
+    $lockPath = etizan_private_home() . '/.etizan-flush.lock';
+    $lock = @fopen($lockPath, 'c');
+    if (!is_resource($lock)) return ['ok'=>false,'error'=>'lock_open_failed','sent'=>0,'failed'=>0];
+    @chmod($lockPath, 0600);
+    if (!flock($lock, LOCK_EX | LOCK_NB)) {
+        fclose($lock);
+        return ['ok'=>true,'locked'=>true,'sent'=>0,'failed'=>0];
     }
-    return ['ok'=>true,'sent'=>$sent,'failed'=>$failed,'remaining'=>(int)$db->query('SELECT COUNT(*) FROM lead_outbox')->fetchColumn()];
+
+    try {
+        $db = etizan_outbox_db();
+        $rows = $db->query('SELECT submission_id,payload FROM lead_outbox ORDER BY created_at ASC LIMIT ' . max(1,min(25,$limit)))->fetchAll(PDO::FETCH_ASSOC);
+        $sent = 0; $failed = 0;
+        foreach ($rows as $row) {
+            $payload = json_decode((string)$row['payload'], true);
+            if (!is_array($payload)) { etizan_remove_queued((string)$row['submission_id']); continue; }
+            $result = etizan_post_json(ETIZAN_ROUTER . '?token=' . rawurlencode($token), $payload, 15000);
+            if (!empty($result['ok'])) {
+                etizan_remove_queued((string)$row['submission_id']);
+                $sent++;
+            } else {
+                etizan_mark_queue_failure((string)$row['submission_id'], (string)($result['error'] ?? ('HTTP ' . ($result['http'] ?? 0))));
+                $failed++;
+            }
+        }
+        $answer = ['ok'=>true,'sent'=>$sent,'failed'=>$failed,'remaining'=>(int)$db->query('SELECT COUNT(*) FROM lead_outbox')->fetchColumn()];
+    } finally {
+        flock($lock, LOCK_UN);
+        fclose($lock);
+    }
+    return $answer;
 }
 
 function etizan_handle_submit(): never {
