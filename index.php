@@ -44,7 +44,7 @@ if (preg_match('#^/(riyadh|jeddah)(?:/([^/]+))?/?$#', $path, $m)) {
     ob_start(static function(string $html): string {
         return str_replace(
             ['/assets/site.js?v=11','<input name="phone"'],
-            ['/assets/site.js?v=12','<input name="phone" dir="ltr" style="direction:ltr;text-align:left;unicode-bidi:plaintext"'],
+            ['/assets/site.js?v=13','<input name="phone" dir="ltr" style="direction:ltr;text-align:left;unicode-bidi:plaintext"'],
             $html
         );
     });
