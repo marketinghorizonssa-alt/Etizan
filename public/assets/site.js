@@ -1,4 +1,9 @@
 (()=>{
+  const followupCss=document.createElement('link');
+  followupCss.rel='stylesheet';
+  followupCss.href='/assets/after-submit.css?v=1';
+  document.head.appendChild(followupCss);
+
   const dl=(event,extra={})=>{window.dataLayer=window.dataLayer||[];window.dataLayer.push({event,...extra})};
   const qs=new URLSearchParams(location.search);
   const attr={}; ['gclid','gbraid','wbraid','utm_source','utm_medium','utm_campaign','utm_term','utm_content','campaign_id','adgroup_id','creative_id'].forEach(k=>{if(qs.get(k))attr[k]=qs.get(k)});
