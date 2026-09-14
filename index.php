@@ -41,7 +41,7 @@ if ($path === '/') { header('Location: /riyadh/', true, 302); exit; }
 if (preg_match('#^/(riyadh|jeddah)/ip-insurance/?$#', $path, $m)) { header('Location: /'.$m[1].'/ip-franchise/', true, 301); exit; }
 if (preg_match('#^/(riyadh|jeddah)(?:/([^/]+))?/?$#', $path, $m)) {
     $key = $m[2] ?? 'general'; if ($key !== 'general' && !isset(etizan_pages()[$key])) { http_response_code(404); echo 'Not Found'; exit; }
-    ob_start(static fn(string $html): string => str_replace('/assets/site.js?v=10','/assets/site.js?v=12',$html));
+    ob_start(static fn(string $html): string => str_replace('/assets/site.js?v=11','/assets/site.js?v=12',$html));
     etizan_render($path);
 }
 http_response_code(404); header('Content-Type: text/plain; charset=utf-8'); echo 'Not Found';
