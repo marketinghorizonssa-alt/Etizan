@@ -1,4 +1,9 @@
 (()=>{
+  const followupCss=document.createElement('link');
+  followupCss.rel='stylesheet';
+  followupCss.href='/assets/after-submit.css?v=1';
+  document.head.appendChild(followupCss);
+
   const dl=(event,extra={})=>{window.dataLayer=window.dataLayer||[];window.dataLayer.push({event,...extra})};
   const qs=new URLSearchParams(location.search);
   const attr={}; ['gclid','gbraid','wbraid','utm_source','utm_medium','utm_campaign','utm_term','utm_content','campaign_id','adgroup_id','creative_id'].forEach(k=>{if(qs.get(k))attr[k]=qs.get(k)});
@@ -8,8 +13,8 @@
     if(menu?.open&&!menu.contains(e.target))menu.removeAttribute('open');
     const a=e.target.closest?.('a.track-wa,a.track-call');
     if(!a)return;
-    const event=a.classList.contains('track-wa')?'whatsapp_click':'phone_click';
-    dl(event,{contact_city:document.body.dataset.city,contact_service:document.body.dataset.service,page_path:location.pathname,...attr});
+    const event=a.classList.contains('after-submit-wa')?'whatsapp_after_form':(a.classList.contains('track-wa')?'whatsapp_click':'phone_click');
+    dl(event,{lead_id:a.dataset.leadId||'',contact_city:document.body.dataset.city,contact_service:document.body.dataset.service,page_path:location.pathname,...attr});
   },{passive:true});
   menu?.addEventListener('keydown',e=>{if(e.key==='Escape')menu.removeAttribute('open')});
 
@@ -18,6 +23,48 @@
   const phone=f.elements.phone;
   if(phone){phone.dir='ltr';phone.style.textAlign='left';phone.maxLength=25;phone.placeholder='05xxxxxxxx / +966... / +20...';}
   select.addEventListener('change',()=>{f.elements.service.value=select.value});
+
+  const followupMessage=(p,leadId)=>{
+    const lines=[
+      'السلام عليكم، قمت بإرسال طلب تواصل قانوني عبر موقع شركة إتزان.',
+      '',
+      `الاسم: ${String(p.name||'').trim()}`,
+      `رقم الجوال: ${String(p.phone||'').trim()}`,
+      `الفرع: ${String(p.city||'').trim()}`,
+      `الخدمة المطلوبة: ${String(p.service||'').trim()}`
+    ];
+    const message=String(p.message||'').trim();
+    if(message)lines.push(`ملخص الطلب: ${message}`);
+    lines.push(`رقم الطلب: ${leadId}`,'','أرغب في متابعة الطلب عبر واتساب.');
+    return lines.join('\n');
+  };
+
+  const showSuccess=(p,leadId)=>{
+    status.className='form-status ok submit-success';
+    status.replaceChildren();
+
+    const msg=document.createElement('div');
+    msg.className='submit-success-message';
+    msg.textContent='تم استلام طلبك بنجاح. يمكنك الآن متابعة نفس الطلب مباشرة عبر واتساب.';
+    status.appendChild(msg);
+
+    const wa=String(document.body.dataset.wa||'').replace(/\D+/g,'');
+    if(wa){
+      const a=document.createElement('a');
+      a.className='after-submit-wa track-wa';
+      a.href=`https://wa.me/${wa}?text=${encodeURIComponent(followupMessage(p,leadId))}`;
+      a.target='_blank';
+      a.rel='noopener';
+      a.dataset.leadId=leadId;
+      a.textContent='متابعة الطلب عبر واتساب';
+      status.appendChild(a);
+
+      const note=document.createElement('small');
+      note.textContent='سيتم فتح واتساب ورسالة جاهزة ببيانات الطلب — راجعها ثم اضغط إرسال.';
+      status.appendChild(note);
+    }
+  };
+
   f.addEventListener('submit',async e=>{
     e.preventDefault(); status.className='form-status'; status.textContent='';
     if(!f.reportValidity())return;
@@ -33,12 +80,13 @@
         if(r.status===422)throw new Error('validation');
         throw new Error('submit');
       }
-      dl('form_submit_success',{lead_id:j.lead_id||'',contact_city:p.city,contact_service:p.service,page_path:location.pathname,...attr});
-      status.textContent='تم استلام طلبك بنجاح. سيتم التواصل معك بعد مراجعة البيانات.'; status.classList.add('ok');
+      const leadId=p.website_submission_id;
+      dl('form_submit_success',{lead_id:j.lead_id||leadId,website_submission_id:leadId,contact_city:p.city,contact_service:p.service,page_path:location.pathname,...attr});
+      showSuccess(p,leadId);
       f.reset(); document.getElementById('consentCheck').checked=true; select.value=document.body.dataset.service; f.elements.service.value=document.body.dataset.service;
     }catch(err){
       status.textContent=err?.message==='validation'?'يرجى التأكد من الاسم ورقم الجوال. يقبل الرقم المحلي أو الدولي.':'تعذر إرسال الطلب الآن. يمكنك التواصل عبر واتساب مباشرة.';
-      status.classList.add('bad');
+      status.classList.add('bad')
     }
     finally{btn.disabled=false;btn.textContent='إرسال الطلب'}
   });
